@@ -128,7 +128,7 @@ Migrations run on every start (`alembic upgrade head`). `SECRET_KEY` is generate
 
 **2. Vercel (frontend)**
 
-1. If Render gave the service a URL other than `https://hms-backend.onrender.com`, update the `/api` rewrite destination in `frontend/vercel.json` and push.
+1. Set the `/api` rewrite destination in `frontend/vercel.json` to your Render service URL (currently `https://hms-backend-5fk4.onrender.com`) and push.
 2. Vercel → **Add New → Project** → import this repository → set **Root Directory** to `frontend`. The framework (Vite) and build settings come from `vercel.json`.
 3. Deploy. Leave `VITE_API_BASE_URL` unset.
 
