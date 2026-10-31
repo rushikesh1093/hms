@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,10 +11,27 @@ from app.core.exceptions import register_exception_handlers
 from app.routers import audit_logs, auth, eye_checkups, followups, patients, reports, users
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logger = logging.getLogger("hms")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # Apply BOOTSTRAP_ADMIN_PASSWORD on start-up regardless of the host's start command.
+    if settings.ENVIRONMENT != "test" and settings.BOOTSTRAP_ADMIN_PASSWORD:
+        from app.core.database import SessionLocal
+        from app.seed import bootstrap_admin
+
+        try:
+            with SessionLocal() as db:
+                logger.info(bootstrap_admin(db))
+        except Exception:  # never block the API from starting
+            logger.exception("Admin bootstrap failed")
+    yield
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
+        lifespan=lifespan,
         title=settings.APP_NAME,
         version="1.0.0",
         description=(

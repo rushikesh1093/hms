@@ -75,3 +75,29 @@ def test_security_headers(client):
     r = client.get("/api/health")
     assert r.headers["x-content-type-options"] == "nosniff"
     assert r.headers["cache-control"] == "no-store"
+
+
+def test_bootstrap_admin_creates_then_resets_and_unlocks(client, db, monkeypatch):
+    from datetime import UTC, datetime, timedelta
+
+    from app.core.config import settings
+    from app.models import User
+    from app.seed import bootstrap_admin
+
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_PASSWORD", "First123")
+    assert "created" in bootstrap_admin(db)
+    assert client.post("/api/auth/login", json={"username": "admin", "password": "First123"}).status_code == 200
+
+    # Locked account with a different password: setting a new value resets and unlocks it.
+    admin = db.query(User).filter_by(username="admin").one()
+    admin.locked_until = datetime.now(UTC) + timedelta(minutes=10)
+    admin.is_active = False
+    db.commit()
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_PASSWORD", "Second123")
+    assert "unlocked" in bootstrap_admin(db)
+    assert client.post("/api/auth/login", json={"username": "admin", "password": "Second123"}).status_code == 200
+    assert client.post("/api/auth/login", json={"username": "admin", "password": "First123"}).status_code == 401
+
+    # A weak value is refused without crashing.
+    monkeypatch.setattr(settings, "BOOTSTRAP_ADMIN_PASSWORD", "weak")
+    assert "rejected" in bootstrap_admin(db)

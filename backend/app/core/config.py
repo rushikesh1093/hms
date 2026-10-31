@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # Used by `python -m app.seed --bootstrap-admin` to create the first admin on a fresh
     # deployment (no interactive shell needed). Ignored once any admin exists.
     BOOTSTRAP_ADMIN_USERNAME: str = "admin"
-    BOOTSTRAP_ADMIN_EMAIL: str = "admin@hospital.local"
+    BOOTSTRAP_ADMIN_EMAIL: str = "admin@hospital.example.org"
     BOOTSTRAP_ADMIN_PASSWORD: str | None = None
 
     SEED_ADMIN_PASSWORD: str | None = None

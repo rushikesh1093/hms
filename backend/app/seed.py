@@ -210,26 +210,50 @@ def create_admin_interactive(db) -> None:
     print("Admin created." if created else "User already exists; nothing changed.")
 
 
-def bootstrap_admin(db) -> None:
-    """Create the first admin from BOOTSTRAP_ADMIN_* settings. Safe to run on every start."""
-    if db.scalar(select(func.count(User.id)).where(User.role == Role.ADMIN)):
-        print("Admin account already exists; bootstrap skipped.")
-        return
-    if not settings.BOOTSTRAP_ADMIN_PASSWORD:
-        print("No admin exists and BOOTSTRAP_ADMIN_PASSWORD is not set; bootstrap skipped.")
-        return
-    from app.schemas.auth import UserCreate
+def bootstrap_admin(db) -> str:
+    """Ensure the BOOTSTRAP_ADMIN_USERNAME account exists and uses BOOTSTRAP_ADMIN_PASSWORD.
 
-    data = UserCreate(
-        username=settings.BOOTSTRAP_ADMIN_USERNAME,
-        name="System Administrator",
-        email=settings.BOOTSTRAP_ADMIN_EMAIL,
-        password=settings.BOOTSTRAP_ADMIN_PASSWORD,
-        role=Role.ADMIN,
-    )
-    ensure_user(db, data.username, data.name, data.email, Role.ADMIN, data.password, "Hospital Administrator")
+    While BOOTSTRAP_ADMIN_PASSWORD is set, every start (re)applies it: the account is
+    created if missing, otherwise its password is reset, it is unlocked, re-activated and
+    given the admin role. Remove the variable once you have signed in. Returns a status line.
+    """
+    from app.core.security import verify_password
+    from app.schemas.auth import _strong_password
+    from app.services import audit_service
+
+    password = settings.BOOTSTRAP_ADMIN_PASSWORD
+    if not password:
+        msg = "BOOTSTRAP_ADMIN_PASSWORD is not set; admin bootstrap skipped."
+        print(msg)
+        return msg
+    username = settings.BOOTSTRAP_ADMIN_USERNAME.strip().lower()
+    try:
+        _strong_password(password)
+    except ValueError as exc:
+        msg = f"BOOTSTRAP_ADMIN_PASSWORD rejected ({exc}); admin bootstrap skipped."
+        print(msg)
+        return msg
+
+    user = db.scalar(select(User).where(User.username == username))
+    if user is None:
+        email = settings.BOOTSTRAP_ADMIN_EMAIL.strip().lower()
+        if db.scalar(select(User).where(User.email == email)):
+            email = f"{username}.{secrets.token_hex(3)}@example.org"
+        user, _ = ensure_user(db, username, "System Administrator", email, Role.ADMIN, password, "Hospital Administrator")
+        action, msg = "bootstrap_create", f"Bootstrap admin '{username}' created."
+    else:
+        if not verify_password(password, user.password_hash):
+            user.password_hash = hash_password(password)
+        user.role = Role.ADMIN
+        user.is_active = True
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        action, msg = "bootstrap_reset", f"Bootstrap admin '{username}' password applied and account unlocked."
+    db.flush()
+    audit_service.record(db, user_id=user.id, action=action, entity_type="user", entity_id=user.id)
     db.commit()
-    print(f"Bootstrap admin '{data.username}' created. Remove BOOTSTRAP_ADMIN_PASSWORD from the environment.")
+    print(f"{msg} Remove BOOTSTRAP_ADMIN_PASSWORD from the environment after signing in.")
+    return msg
 
 
 def main() -> None:
