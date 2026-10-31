@@ -1,0 +1,50 @@
+# Render Blueprint: PostgreSQL + FastAPI backend.
+# Render dashboard -> New -> Blueprint -> select this repo.
+# You will be asked for the values marked `sync: false`.
+databases:
+  - name: hms-db
+    databaseName: hospital_db
+    user: hospital_app
+    plan: free
+    postgresMajorVersion: "17"
+
+services:
+  - type: web
+    name: hms-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # Migrations and first-admin bootstrap run on every start; both are idempotent.
+    startCommand: >-
+      alembic upgrade head &&
+      python -m app.seed --bootstrap-admin &&
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips '*'
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hms-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: TIMEZONE
+        value: Asia/Kolkata
+      # Your Vercel URL, e.g. https://hms.vercel.app (comma-separate several)
+      - key: CORS_ORIGINS
+        sync: false
+      # Password for the first admin account (username "admin"). Remove after first login.
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: HOSPITAL_NAME
+        value: Government District Hospital
+      - key: HOSPITAL_ADDRESS
+        value: Department of Ophthalmology, Civil Lines, District Headquarters
+      - key: HOSPITAL_PHONE
+        value: "+91-0000-000000"

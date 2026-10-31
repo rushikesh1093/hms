@@ -1,0 +1,20 @@
+# Secrets
+.env
+backend/.env
+
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# E2E artefacts
+e2e/screenshots/
+
+# Backups
+backups/
+*.dump
