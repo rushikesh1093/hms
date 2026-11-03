@@ -166,7 +166,7 @@ export default function PortalHome() {
   const [pwOpen, setPwOpen] = useState(false);
 
   useEffect(() => {
-    setPortalExpiredHandler(() => navigate('/portal/login', { replace: true, state: { expired: true } }));
+    setPortalExpiredHandler(() => navigate('/login?as=patient', { replace: true, state: { expired: true } }));
   }, [navigate]);
 
   const me = useAsync(() => portalService.me(), []);
@@ -180,7 +180,7 @@ export default function PortalHome() {
 
   const logout = () => {
     portalService.logout();
-    navigate('/portal/login', { replace: true });
+    navigate('/login?as=patient', { replace: true });
   };
   const openPdf = (id) => portalService.openPdf(id).catch((e) => toast.error(getErrorMessage(e)));
 

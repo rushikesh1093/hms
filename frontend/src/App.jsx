@@ -5,7 +5,6 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 import { PageLoader, EmptyState } from './components/common/Feedback';
 import Login from './pages/Login';
-import PortalLogin from './pages/portal/PortalLogin';
 import { hasPortalToken } from './services/portalApi';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -31,18 +30,15 @@ function PublicOnly({ children }) {
 
 // Components (not inline conditions) so the token is checked on every navigation.
 function PortalOnly({ children }) {
-  return hasPortalToken() ? children : <Navigate to="/portal/login" replace />;
-}
-
-function PortalPublic({ children }) {
-  return hasPortalToken() ? <Navigate to="/portal" replace /> : children;
+  return hasPortalToken() ? children : <Navigate to="/login?as=patient" replace />;
 }
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-      <Route path="/portal/login" element={<PortalPublic><PortalLogin /></PortalPublic>} />
+      {/* One login page with a Doctor/Staff ↔ Patient switch; /portal/login is a shortcut to the patient side. */}
+      <Route path="/portal/login" element={<Navigate to="/login?as=patient" replace />} />
       <Route path="/portal" element={<PortalOnly><Suspense fallback={<PageLoader />}><PortalHome /></Suspense></PortalOnly>} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
