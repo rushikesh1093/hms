@@ -6,7 +6,7 @@ import { Badge, PageHeader, Pagination } from '../components/common/Display';
 import { EmptyState, ErrorState, TableSkeleton } from '../components/common/Feedback';
 import { formatDateTime, titleCase } from '../utils/format';
 
-const ACTION_TONES = { create: 'green', update: 'blue', deactivate: 'red', restore: 'teal', login_failed: 'amber', refresh_token_reuse: 'red', view: 'slate' };
+const ACTION_TONES = { create: 'green', update: 'blue', deactivate: 'red', restore: 'teal', login_failed: 'amber', refresh_token_reuse: 'red', view: 'slate', portal_login: 'teal', portal_login_failed: 'amber', portal_enable: 'green', portal_disable: 'red', portal_password_reset: 'blue', portal_password_change: 'blue', portal_export_pdf: 'slate' };
 
 function Changes({ log }) {
   const keys = Array.from(new Set([...Object.keys(log.old_values || {}), ...Object.keys(log.new_values || {})]));
@@ -94,7 +94,7 @@ export default function AuditLogs() {
                     <tr className="cursor-pointer hover:bg-slate-50" onClick={() => setOpen(open === log.id ? null : log.id)}>
                       <td className="td">{open === log.id ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4 text-slate-400" />}</td>
                       <td className="td">{formatDateTime(log.created_at)}</td>
-                      <td className="td">{log.user ? `${log.user.name} (${titleCase(log.user.role)})` : <span className="text-slate-400">Unknown</span>}</td>
+                      <td className="td">{log.user ? `${log.user.name} (${titleCase(log.user.role)})` : log.action.startsWith('portal_') ? <span className="text-teal-700">Patient (portal)</span> : <span className="text-slate-400">Unknown</span>}</td>
                       <td className="td"><Badge tone={ACTION_TONES[log.action] || 'slate'}>{titleCase(log.action)}</Badge></td>
                       <td className="td">{titleCase(log.entity_type)} <span className="font-mono text-xs text-slate-500">{log.entity_id}</span></td>
                       <td className="td font-mono text-xs text-slate-500">{log.ip_address || '—'}</td>
