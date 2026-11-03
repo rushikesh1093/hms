@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import EyeLogo from '../common/EyeLogo';
 import { can } from '../../utils/permissions';
 import { titleCase } from '../../utils/format';
 
@@ -40,9 +41,7 @@ function Sidebar({ onNavigate }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="rounded-lg bg-white/10 p-1.5">
-          <Eye className="h-5 w-5 text-teal-300" />
-        </div>
+        <EyeLogo className="h-9 w-9 shadow-lg shadow-black/20 rounded-[10px]" />
         <div className="leading-tight">
           <p className="text-sm font-semibold text-white">Eye Care HMS</p>
           <p className="text-[11px] text-brand-200">Ophthalmology Department</p>
