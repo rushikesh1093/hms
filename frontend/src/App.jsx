@@ -1,10 +1,12 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import ProtectedRoute from './routes/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 import { PageLoader, EmptyState } from './components/common/Feedback';
 import Login from './pages/Login';
+import PortalLogin from './pages/portal/PortalLogin';
+import { hasPortalToken } from './services/portalApi';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const RegisterPatient = lazy(() => import('./pages/RegisterPatient'));
@@ -19,6 +21,7 @@ const Reports = lazy(() => import('./pages/Reports'));
 const Users = lazy(() => import('./pages/Users'));
 const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const Settings = lazy(() => import('./pages/Settings'));
+const PortalHome = lazy(() => import('./pages/portal/PortalHome'));
 
 function PublicOnly({ children }) {
   const { user, initializing } = useAuth();
@@ -26,10 +29,21 @@ function PublicOnly({ children }) {
   return user ? <Navigate to="/" replace /> : children;
 }
 
+// Components (not inline conditions) so the token is checked on every navigation.
+function PortalOnly({ children }) {
+  return hasPortalToken() ? children : <Navigate to="/portal/login" replace />;
+}
+
+function PortalPublic({ children }) {
+  return hasPortalToken() ? <Navigate to="/portal" replace /> : children;
+}
+
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+      <Route path="/portal/login" element={<PortalPublic><PortalLogin /></PortalPublic>} />
+      <Route path="/portal" element={<PortalOnly><Suspense fallback={<PageLoader />}><PortalHome /></Suspense></PortalOnly>} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<Dashboard />} />

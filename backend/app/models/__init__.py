@@ -2,6 +2,7 @@ from app.models.audit_log import AuditLog
 from app.models.eye_checkup import EyeCheckup, checkup_code_seq
 from app.models.followup import Followup
 from app.models.patient import Patient, patient_code_seq
+from app.models.patient_account import PatientAccount
 from app.models.user import RefreshToken, User
 
 __all__ = [
@@ -9,6 +10,7 @@ __all__ = [
     "EyeCheckup",
     "Followup",
     "Patient",
+    "PatientAccount",
     "RefreshToken",
     "User",
     "checkup_code_seq",

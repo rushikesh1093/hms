@@ -11,6 +11,7 @@ import { Badge, DetailGrid, PageHeader, Tabs } from '../components/common/Displa
 import { EmptyState, ErrorState, PageLoader, Skeleton } from '../components/common/Feedback';
 import { ConfirmDialog } from '../components/common/Modal';
 import PrintHeader from '../components/common/PrintHeader';
+import PortalAccessCard from '../components/patients/PortalAccessCard';
 import { CheckupTimeline, FollowupHistory, MedicalHistory } from '../components/checkups/CheckupTimeline';
 import { formatDate, formatDateTime, titleCase } from '../utils/format';
 
@@ -163,6 +164,7 @@ export default function PatientDetails() {
               ]}
             />
           </section>
+          {can(user, 'registerPatient') && <PortalAccessCard patient={p} />}
           <section className="card no-print p-5 text-xs text-slate-500">
             Registered by {p.creator?.name || '—'} on {formatDateTime(p.created_at)}
             {p.updater && <> · Last updated by {p.updater.name} on {formatDateTime(p.updated_at)}</>}

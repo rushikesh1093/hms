@@ -8,7 +8,7 @@ from sqlalchemy import text
 from app.core.config import settings
 from app.core.database import engine
 from app.core.exceptions import register_exception_handlers
-from app.routers import audit_logs, auth, eye_checkups, followups, patients, reports, users
+from app.routers import audit_logs, auth, eye_checkups, followups, patients, portal, reports, users
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("hms")
@@ -62,7 +62,9 @@ def create_app() -> FastAPI:
         return response
 
     register_exception_handlers(app)
-    for r in (auth, users, patients, eye_checkups, followups, reports, audit_logs):
+    # portal.staff_router goes before patients so /{id}/portal-access is matched explicitly.
+    app.include_router(portal.staff_router)
+    for r in (auth, users, patients, eye_checkups, followups, reports, audit_logs, portal):
         app.include_router(r.router)
 
     @app.get("/api/health", tags=["Health"])

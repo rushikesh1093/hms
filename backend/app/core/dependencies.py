@@ -10,8 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.exceptions import AuthenticationError, PermissionDeniedError
-from app.core.security import ACCESS, decode_token
-from app.models import User
+from app.core.security import ACCESS, PATIENT_ACCESS, decode_token
+from app.models import PatientAccount, User
 from app.models.enums import Role
 
 bearer_scheme = HTTPBearer(auto_error=False, description="Access token from POST /api/auth/login")
@@ -55,6 +55,29 @@ AdminUser = Annotated[User, Depends(require_roles(Role.ADMIN))]
 ClinicalUser = Annotated[User, Depends(require_roles(Role.ADMIN, Role.DOCTOR))]
 RegistrationUser = Annotated[User, Depends(require_roles(Role.ADMIN, Role.RECEPTIONIST))]
 StaffUser = Annotated[User, Depends(require_roles(Role.ADMIN, Role.DOCTOR, Role.RECEPTIONIST))]
+
+
+def get_current_patient(
+    db: DbSession,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+) -> PatientAccount:
+    """Patient-portal account from a patient token. Staff tokens are rejected here,
+    and patient tokens are rejected by get_current_user."""
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise AuthenticationError("Authentication required")
+    try:
+        payload = decode_token(credentials.credentials, PATIENT_ACCESS)
+        account_id = int(payload["sub"])
+    except (jwt.InvalidTokenError, ValueError, KeyError):
+        raise AuthenticationError("Invalid or expired session", code="token_invalid") from None
+
+    account = db.get(PatientAccount, account_id)
+    if account is None or not account.is_active or not account.patient.is_active:
+        raise AuthenticationError("Patient login is disabled or no longer exists")
+    return account
+
+
+CurrentPatient = Annotated[PatientAccount, Depends(get_current_patient)]
 
 
 def client_ip(request: Request) -> str | None:

@@ -11,6 +11,7 @@ from app.core.config import settings
 
 ACCESS = "access"
 REFRESH = "refresh"
+PATIENT_ACCESS = "patient_access"  # never accepted by staff endpoints
 
 
 def hash_password(password: str) -> str:
@@ -67,3 +68,20 @@ def decode_token(token: str, expected_type: str) -> dict[str, Any]:
     if payload.get("type") != expected_type:
         raise jwt.InvalidTokenError("Wrong token type")
     return payload
+
+
+def create_patient_token(account_id: int, patient_id: int) -> tuple[str, int]:
+    """Access token for the patient portal. Its distinct `type` means staff endpoints
+    (which require type "access") reject it."""
+    expires_in = settings.PATIENT_TOKEN_EXPIRE_MINUTES * 60
+    now = datetime.now(UTC)
+    token = _encode(
+        {
+            "sub": str(account_id),
+            "pid": patient_id,
+            "type": PATIENT_ACCESS,
+            "iat": now,
+            "exp": now + timedelta(seconds=expires_in),
+        }
+    )
+    return token, expires_in

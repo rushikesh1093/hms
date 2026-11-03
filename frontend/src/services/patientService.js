@@ -12,4 +12,7 @@ export const patientService = {
   checkDuplicates: (body) => api.post('/patients/check-duplicates', body).then((r) => r.data),
   checkups: (id) => api.get(`/patients/${id}/checkups`).then((r) => r.data),
   followups: (id) => api.get(`/patients/${id}/followups`).then((r) => r.data),
+  portalAccess: (id) => api.get(`/patients/${id}/portal-access`).then((r) => r.data),
+  setPortalPassword: (id, password) => api.put(`/patients/${id}/portal-access`, { password }).then((r) => r.data),
+  disablePortal: (id) => api.delete(`/patients/${id}/portal-access`).then((r) => r.data),
 };

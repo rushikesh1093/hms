@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CalendarClock, ClipboardList, Eye, EyeOff, Lock, ShieldCheck, User, UsersRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../services/api';
@@ -155,6 +155,17 @@ export default function Login() {
               </button>
             </form>
           </div>
+
+          <Link
+            to="/portal/login"
+            className="mt-4 flex items-center justify-between rounded-xl border border-teal-200 bg-teal-50/60 px-4 py-3 text-sm transition-colors hover:bg-teal-50"
+          >
+            <span>
+              <span className="block font-medium text-teal-900">Are you a patient?</span>
+              <span className="block text-xs text-teal-700">View your eye reports and follow-up dates</span>
+            </span>
+            <span className="font-medium text-teal-700">Patient login →</span>
+          </Link>
 
           <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-slate-400">
             <ShieldCheck className="h-3.5 w-3.5" /> Forgot your password? Ask your administrator to reset it.
